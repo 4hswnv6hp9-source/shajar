@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Oilaviy shajara</title>
+<style>
+:root{--bg:#f2f6f6;--card:#fff;--ink:#14282c;--mute:#5c7378;--line:#2b6f77;--accent:#b0243a;--root:#1f5d66;--root-ink:#fff;--field:#fff;--bd:#c9d8da;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f191c;--card:#172529;--ink:#e6f0f1;--mute:#8fa7ab;--line:#4aa3ae;--accent:#ef7a8c;--root:#2b7f8a;--field:#0f191c;--bd:#2c4247;color-scheme:dark}}
+*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1{font:600 1.7rem/1.2 Georgia,"Iowan Old Style",serif;margin:0 0 .25rem}
+header,form{max-width:720px;margin:0 auto;padding:1.25rem 1rem 0}
+header p{margin:0;color:var(--mute)}
+form{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+form .wide{grid-column:1/-1}
+input,select,button{font:inherit;padding:.6rem .7rem;border-radius:8px;border:1px solid var(--bd);background:var(--field);color:var(--ink);min-width:0}
+button{cursor:pointer;border-color:transparent;background:var(--accent);color:#fff;font-weight:600}
+button.ghost{background:none;color:var(--mute);border-color:var(--bd);font-weight:400}
+:focus-visible{outline:3px solid var(--line);outline-offset:2px}
+.actions{display:flex;gap:.6rem}.actions button:first-child{flex:1}
+.tree{overflow-x:auto;padding:1.5rem 1rem 3rem;text-align:center}
+.tree ul{display:flex;justify-content:center;padding:20px 0 0;margin:0;position:relative;width:max-content;min-width:100%}
+.tree>ul{padding-top:0;margin:0 auto}
+.tree li{list-style:none;position:relative;padding:20px 8px 0}
+.tree li::before,.tree li::after{content:"";position:absolute;top:0;right:50%;width:50%;height:20px;border-top:2px solid var(--line)}
+.tree li::after{right:auto;left:50%;border-left:2px solid var(--line)}
+.tree li:only-child{padding-top:0}
+.tree li:only-child::before,.tree li:only-child::after{display:none}
+.tree li:first-child::before,.tree li:last-child::after{border:0}
+.tree li:last-child::before{border-right:2px solid var(--line);border-radius:0 8px 0 0}
+.tree li:first-child::after{border-radius:8px 0 0 0}
+.tree ul ul::before{content:"";position:absolute;top:0;left:50%;height:20px;border-left:2px solid var(--line)}
+.card{display:inline-block;position:relative;min-width:110px;max-width:170px;padding:.6rem .9rem;background:var(--card);border:1.5px solid var(--line);border-radius:10px}
+.card b{display:block;font:600 1rem/1.25 Georgia,"Iowan Old Style",serif;overflow-wrap:anywhere}
+.card small{color:var(--mute);font-size:.8rem}
+.card.root{background:var(--root);border-color:var(--root);color:var(--root-ink)}
+.card.root small{color:inherit;opacity:.85}
+.card .x{position:absolute;top:-9px;right:-9px;width:22px;height:22px;padding:0;border-radius:50%;font-size:.8rem;line-height:1;background:var(--card);color:var(--accent);border:1.5px solid var(--accent)}
+.empty{color:var(--mute);padding:2rem 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Oilaviy shajara</h1>
+  <p>Ota-bobolaringizni qoʻshing — daraxt oʻzi qurilib boradi.</p>
+</header>
+<form id="f">
+  <input id="name" class="wide" placeholder="Ism-familiya" required maxlength="60" aria-label="Ism-familiya">
+  <input id="years" placeholder="Yillari (1950–2020)" maxlength="20" aria-label="Yillari">
+  <select id="parent" aria-label="Kimning farzandi"></select>
+  <div class="wide actions">
+    <button type="submit">Qoʻshish</button>
+    <button type="button" class="ghost" id="reset">Boshidan</button>
+  </div>
+</form>
+<main class="tree" id="tree"></main>
+<script>
+var KEY="shajara-v1";
+var sample=[
+ {id:1,name:"Karim Rahimov",years:"1925–1999",parent:0},
+ {id:2,name:"Abdulla Karimov",years:"1950–",parent:1},
+ {id:3,name:"Nodira Karimova",years:"1953–",parent:1},
+ {id:4,name:"Bobur Abdullayev",years:"1978–",parent:2},
+ {id:5,name:"Malika Abdullayeva",years:"1981–",parent:2},
+ {id:6,name:"Jasur Abdullayev",years:"2005–",parent:4}
+];
+var people=load();
+function load(){try{var s=localStorage.getItem(KEY);if(s)return JSON.parse(s)}catch(e){}return sample.slice()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(people))}catch(e){}}
+function build(pid){
+  var kids=people.filter(function(p){return p.parent===pid});
+  if(!kids.length)return null;
+  var ul=document.createElement("ul");
+  kids.forEach(function(k){
+    var li=document.createElement("li"),c=document.createElement("div");
+    c.className="card"+(k.parent===0?" root":"");
+    var b=document.createElement("b");b.textContent=k.name;c.appendChild(b);
+    if(k.years){var s=document.createElement("small");s.textContent=k.years;c.appendChild(s)}
+    var x=document.createElement("button");x.type="button";x.className="x";x.textContent="×";
+    x.setAttribute("aria-label",k.name+" — oʻchirish");
+    x.onclick=function(){if(confirm(k.name+" va uning avlodlari oʻchirilsinmi?")){removeTree(k.id);save();render()}};
+    c.appendChild(x);li.appendChild(c);
+    var sub=build(k.id);if(sub)li.appendChild(sub);
+    ul.appendChild(li);
+  });
+  return ul;
+}
+function removeTree(id){
+  people.filter(function(p){return p.parent===id}).forEach(function(p){removeTree(p.id)});
+  people=people.filter(function(p){return p.id!==id});
+}
+function render(){
+  var t=document.getElementById("tree");t.textContent="";
+  var ul=build(0);
+  if(ul)t.appendChild(ul);
+  else{var e=document.createElement("p");e.className="empty";e.textContent="Shajara boʻsh. Birinchi ajdodni qoʻshing.";t.appendChild(e)}
+  var sel=document.getElementById("parent");sel.textContent="";
+  var o=document.createElement("option");o.value="0";o.textContent="Eng birinchi ajdod";sel.appendChild(o);
+  people.forEach(function(p){var op=document.createElement("option");op.value=p.id;op.textContent="Farzandi: "+p.name;sel.appendChild(op)});
+}
+document.getElementById("f").onsubmit=function(e){
+  e.preventDefault();
+  var n=document.getElementById("name"),y=document.getElementById("years"),p=document.getElementById("parent");
+  var id=people.reduce(function(m,q){return Math.max(m,q.id)},0)+1;
+  people.push({id:id,name:n.value.trim(),years:y.value.trim(),parent:+p.value});
+  save();render();n.value="";y.value="";n.focus();
+};
+document.getElementById("reset").onclick=function(){
+  if(confirm("Hamma maʼlumot oʻchirilib, namuna qaytariladi. Davom etasizmi?")){people=sample.slice();save();render()}
+};
+render();
+</script>
+</body>
+</html>
